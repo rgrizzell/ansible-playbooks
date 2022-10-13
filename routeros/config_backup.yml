@@ -1,0 +1,22 @@
+#!/usr/bin/env ansible-playbook
+---
+- name: Backup RouterOS configuration
+  hosts: all
+  vars:
+    backup_dir: "{{ routeros_backup_directory | default('./backups') }}"
+  tasks:
+    - name: Create backup directory
+      local_action: ansible.builtin.file path={{ backup_dir }} state=directory
+
+    - name: Backup configuration
+      community.routeros.command:
+        commands: /system backup save name={{ inventory_hostname }} password={{ routeros_backup_password }}
+        wait_for: result[0] contains 'Configuration backup saved'
+      when: ansible_network_os == 'community.routeros.routeros'
+
+    - name: Download configuration backup
+      ansible.netcommon.net_get:
+        src: "/{{ inventory_hostname }}.backup"
+        dest: "{{ backup_dir }}/{{ inventory_hostname }}.backup"
+        protocol: sftp
+      when: ansible_network_os == 'community.routeros.routeros'

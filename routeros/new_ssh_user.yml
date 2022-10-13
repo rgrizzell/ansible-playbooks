@@ -1,0 +1,51 @@
+---
+- name: Create new user with SSH key
+  hosts: all
+  vars:
+    key_name: "id_ssh_rsa"
+    key_path: "{{ routeros_key | }}"
+  vars_prompt:
+    - name: routeros_user
+      prompt: "Enter new username"
+      private: no
+
+    - name: routeros_group
+      prompt: "Enter group for new user"
+      private: no
+
+  tasks:
+    - name: "Generate SSH Key"
+      openssh_keypair:
+        path: ./{{ key_name }}
+        comment: "{{ routeros_user }}@ansible"
+        size: 4096
+        type: rsa
+      register: ssh_keygen
+
+    - name: "Add {{ routeros_user}} as user in group {{ routeros_group }}"
+      community.routeros.command:
+        commands: /user add name={{ routeros_user }} group={{ routeros_group }}
+      when: ansible_network_os == 'community.routeros.routeros'
+
+    - name: "Upload SSH pubkey"
+      ansible.netcommon.net_put:
+        src: "{{ ssh_keygen.filename }}.pub"
+        dest: "/{{ key_name }}.pub"
+        protocol: sftp
+      when: ansible_network_os == 'community.routeros.routeros'
+
+    - name: "Importing SSH Key for {{ routeros_user }}"
+      community.routeros.command:
+        commands:
+          - /user ssh-keys import user={{ routeros_user }} public-key-file={{ key_name }}.pub
+          - /file remove {{ key_name }}.pub
+          - /user ssh-keys print
+        register: ssh_import
+
+    - name: Show SSH keys
+      debug:
+        var: ssh_import.stdout_lines[0]
+
+    - name: Show SSH keys
+      debug:
+        var: ssh_import.stdout_lines[2]
