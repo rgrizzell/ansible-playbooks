@@ -1,0 +1,14 @@
+---
+- name: Force CFEngine Agents to run
+  hosts: "{{ target_groups }}"
+  become: yes
+  vars:
+    target_groups: "all"
+  tasks:
+    - name: Refresh policy files
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/cf-agent -Kf update.cf
+
+    - name: Run cf-agent
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/cf-agent -IK

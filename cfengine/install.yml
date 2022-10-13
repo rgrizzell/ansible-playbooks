@@ -1,0 +1,38 @@
+---
+- name: Install CFEngine Community
+  hosts: "{{ target_groups }}"
+  become: yes
+  vars:
+    target_groups: "all"
+    package_version: "3.18.2-1.debian9"
+  tasks:
+    - name: Install CFEngine requirements
+      ansible.builtin.package:
+        name:
+          - apt-utils
+          - python3-apt
+          - gnupg2
+
+    - name: Configure CFEngine Apt Key
+      ansible.builtin.apt_key:
+        url: https://cfengine-package-repos.s3.amazonaws.com/pub/gpg.key
+
+    - name: Configure CFEngine Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://cfengine-package-repos.s3.amazonaws.com/pub/apt/packages stable main
+        filename: cfengine-community
+
+    - name: Install CFEngine package
+      ansible.builtin.apt:
+        name: "cfengine-community={{ package_version }}"
+
+    - name: Trigger force run of the agents
+      ansible.builtin.include_tasks: force-run.yml
+
+    - name: Refresh policy files
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/cf-agent -Kf update.cf
+
+    - name: Run cf-agent
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/cf-agent -IK
