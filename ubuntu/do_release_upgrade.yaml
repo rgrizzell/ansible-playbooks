@@ -1,0 +1,43 @@
+---
+- name: Upgrade Ubuntu to the next release
+  strategy: free
+  hosts: all
+  become: yes
+  vars:
+    reboot_timeout: 120
+  tasks:
+    - name: Current OS
+      debug:
+        msg:
+          - "ansible_distribution {{ hostvars[inventory_hostname].ansible_distribution }}"
+          - "version {{ hostvars[inventory_hostname].ansible_distribution_version }}"
+
+    - name: Apply any pending updates, remove unnecessary packages, and clean up old caches.
+      ansible.builtin.apt:
+        clean: yes
+        autoremove: yes
+        upgrade: dist
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Run the release upgrade
+      ansible.builtin.command:
+        cmd: /usr/bin/do-release-upgrade --allow-third-party --frontend DistUpgradeViewNonInteractive
+
+    - name: Reboot the host
+      ansible.builtin.reboot:
+        reboot_timeout: "{{ reboot_timeout }}"
+
+    - name: Refresh host facts
+      setup:
+
+    - name: Clean up old packages and caches.
+      ansible.builtin.apt:
+        clean: yes
+        autoremove: yes
+
+    - name: Updated OS
+      debug:
+        msg:
+          - "Version: {{ hostvars[inventory_hostname].ansible_distribution_version }}"
+          - "Release: {{ hostvars[inventory_hostname].ansible_distribution_release }}"
