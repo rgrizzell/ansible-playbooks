@@ -9,8 +9,8 @@
     - name: Current OS
       debug:
         msg:
-          - "ansible_distribution {{ hostvars[inventory_hostname].ansible_distribution }}"
-          - "version {{ hostvars[inventory_hostname].ansible_distribution_version }}"
+          - "Version: {{ hostvars[inventory_hostname].ansible_distribution_version }}"
+          - "Release: {{ hostvars[inventory_hostname].ansible_distribution_release }}"
 
     - name: Apply any pending updates, remove unnecessary packages, and clean up old caches.
       ansible.builtin.apt:
