@@ -1,0 +1,19 @@
+---
+- name: Clean up Apt files
+  strategy: free
+  hosts: all
+  become: yes
+  tasks:
+    - name: Find backup files in Apt directories
+      ansible.builtin.find:
+        paths: /etc/apt
+        patterns:
+          - "*.save"
+        recurse: yes
+      register: backup
+
+    - name: Delete backup files in Apt directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ backup.files }}"
