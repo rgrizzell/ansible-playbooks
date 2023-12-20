@@ -1,0 +1,10 @@
+[griznet]
+192.168.1.1
+
+[griznet:vars]
+ansible_connection=ansible.netcommon.network_cli
+ansible_network_os=community.routeros.routeros
+ansible_user=backups
+ansible_ssh_private_key_file=/home/rgrizzell/mikrotik-rsa4096
+routeros_backup_password=asdf
+routeros_backup_directory=

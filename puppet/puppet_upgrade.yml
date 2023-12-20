@@ -1,0 +1,30 @@
+---
+- name: Upgrade Puppet to next major release
+  hosts: "{{ target_groups }}"
+  become: yes
+  vars:
+    target_groups: "all"
+    major_version: 7
+  tasks:
+    - name: Get Puppet Release package
+      ansible.builtin.get_url:
+        url: https://apt.puppetlabs.com/puppet{{ major_version }}-release-{{ ansible_distribution_release }}.deb
+        dest: /tmp
+      register: release_pkg
+
+    - name: Install Puppet Release package
+      ansible.builtin.apt:
+        deb: "{{ release_pkg.dest }}"
+
+    - name: Upgrade the Puppet agent
+      ansible.builtin.apt:
+        name: puppet-agent
+        state: latest
+        update_cache: yes
+
+    - name: Remove the old release
+      ansible.builtin.apt:
+        name: puppet{{ major_version|int - 1 }}-release
+        state: absent
+        purge: true
+
